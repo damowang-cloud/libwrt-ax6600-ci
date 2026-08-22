@@ -1,0 +1,14 @@
+#!/bin/sh
+# Docker 数据放到 overlay（eMMC 空间大）
+if [ -f /etc/config/dockerd ]; then
+  uci -q set dockerd.globals.data_root='/opt/docker'
+  uci -q commit dockerd
+fi
+
+# 雅典娜 USB 供电（部分固件需要）
+if command -v devmem >/dev/null 2>&1; then
+  devmem 0x1016000 32 0x201 >/dev/null 2>&1 || true
+  devmem 0x1016004 32 0x2 >/dev/null 2>&1 || true
+fi
+
+exit 0

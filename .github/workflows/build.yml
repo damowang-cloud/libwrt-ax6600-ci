@@ -36,6 +36,10 @@ jobs:
         run: |
           git clone --depth 1 --single-branch -b 25.12-nss https://github.com/LiBwrt/LibWrt.git openwrt
           echo "source $(cd openwrt && git rev-parse --short HEAD)"
+          # HLOS 分区只有 6MB，gzip+BTF 超限；改 lzma 压缩内核
+          sed -i '/define Device\/jdcloud_re-cs-02/,/^endef/{s/Device\/FitImage)/Device\/FitImageLzma)/}' \
+            openwrt/target/linux/qualcommax/image/ipq60xx.mk
+          grep -A8 'Device/jdcloud_re-cs-02' openwrt/target/linux/qualcommax/image/ipq60xx.mk
 
       - name: Write config and files
         run: |
@@ -46,6 +50,7 @@ jobs:
           CONFIG_DEVEL=y
           CONFIG_BPF_TOOLCHAIN_HOST=y
           CONFIG_KERNEL_DEBUG_INFO=y
+          CONFIG_KERNEL_DEBUG_INFO_REDUCED=y
           CONFIG_KERNEL_DEBUG_INFO_BTF=y
           CONFIG_KERNEL_BPF_EVENTS=y
           CONFIG_KERNEL_CGROUP_BPF=y
@@ -130,7 +135,6 @@ jobs:
           t=open(p).read()
           open(p,"w").write("\n".join(l.lstrip() for l in t.splitlines())+"\n")
           PY
-          echo '# CONFIG_KERNEL_DEBUG_INFO_REDUCED is not set' >> openwrt/.config
           echo '# CONFIG_BPF_TOOLCHAIN_NONE is not set' >> openwrt/.config
           echo '# CONFIG_PACKAGE_luci-app-openclash is not set' >> openwrt/.config
           echo '# CONFIG_PACKAGE_luci-app-passwall is not set' >> openwrt/.config
@@ -171,7 +175,7 @@ jobs:
         working-directory: openwrt
         run: |
           make defconfig
-          grep -E 'DEVICE_jdcloud_re-cs-02=y|DEBUG_INFO_BTF=y|XDP_SOCKETS=y|luci-app-(dae|homeproxy|ddns-go|openlist|dockerman|tailscale|partexp)=y' .config || true
+          grep -E 'DEVICE_jdcloud_re-cs-02=y|DEBUG_INFO_BTF=y|DEBUG_INFO_REDUCED=y|XDP_SOCKETS=y|luci-app-(dae|homeproxy|ddns-go|openlist|dockerman|tailscale|partexp)=y' .config || true
 
       - name: Download
         working-directory: openwrt

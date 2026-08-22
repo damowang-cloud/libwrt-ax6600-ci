@@ -36,8 +36,6 @@ jobs:
         run: |
           git clone --depth 1 --single-branch -b 25.12-nss https://github.com/LiBwrt/LibWrt.git openwrt
           echo "source $(cd openwrt && git rev-parse --short HEAD)"
-          sed -i '/define Device\/jdcloud_re-cs-02/,/^endef/{s/Device\/FitImage)/Device\/FitImageLzma)/}' \
-            openwrt/target/linux/qualcommax/image/ipq60xx.mk
           grep -A8 'Device/jdcloud_re-cs-02' openwrt/target/linux/qualcommax/image/ipq60xx.mk
 
       - name: Extra packages
@@ -53,8 +51,6 @@ jobs:
         run: |
           ./scripts/feeds update -a
           ./scripts/feeds install -a
-          ./scripts/feeds install -a -p luci || true
-          ./scripts/feeds install -a -p packages || true
           ./scripts/feeds install luci-app-dae dae luci-app-homeproxy sing-box \
             luci-app-tailscale-community tailscale luci-app-openlist \
             luci-app-ddns-go ddns-go luci-app-dockerman luci-lib-docker \
@@ -72,11 +68,11 @@ jobs:
           CONFIG_DEVEL=y
           CONFIG_BPF_TOOLCHAIN_HOST=y
           CONFIG_KERNEL_DEBUG_INFO=y
+          CONFIG_KERNEL_DEBUG_INFO_REDUCED=y
           CONFIG_KERNEL_DEBUG_INFO_BTF=y
           CONFIG_KERNEL_BPF_EVENTS=y
           CONFIG_KERNEL_CGROUP_BPF=y
           CONFIG_KERNEL_XDP_SOCKETS=y
-          CONFIG_KERNEL_KPROBES=y
           CONFIG_KERNEL_CGROUPS=y
           CONFIG_KERNEL_NAMESPACES=y
           CONFIG_SECCOMP=y
@@ -157,7 +153,6 @@ jobs:
           lines = [l.strip() for l in cfg.splitlines() if l.strip()]
           Path('openwrt/.config').write_text('\n'.join(lines) + '\n')
           PY
-          echo '# CONFIG_KERNEL_DEBUG_INFO_REDUCED is not set' >> openwrt/.config
           echo '# CONFIG_BPF_TOOLCHAIN_NONE is not set' >> openwrt/.config
           echo '# CONFIG_PACKAGE_luci-app-openclash is not set' >> openwrt/.config
           echo '# CONFIG_PACKAGE_luci-app-passwall is not set' >> openwrt/.config
@@ -185,7 +180,7 @@ jobs:
         run: |
           make defconfig
           PKGS='kmod-sched-bpf luci-app-dae dae luci-app-homeproxy sing-box luci-app-tailscale-community tailscale luci-app-openlist luci-app-ddns-go ddns-go luci-app-dockerman dockerd docker luci-app-partexp luci-app-ttyd'
-          KOPTS='CONFIG_KERNEL_DEBUG_INFO=y CONFIG_KERNEL_DEBUG_INFO_BTF=y CONFIG_KERNEL_XDP_SOCKETS=y CONFIG_KERNEL_BPF_EVENTS=y CONFIG_KERNEL_CGROUP_BPF=y CONFIG_BPF_TOOLCHAIN_HOST=y'
+          KOPTS='CONFIG_KERNEL_DEBUG_INFO=y CONFIG_KERNEL_DEBUG_INFO_REDUCED=y CONFIG_KERNEL_DEBUG_INFO_BTF=y CONFIG_KERNEL_XDP_SOCKETS=y CONFIG_KERNEL_BPF_EVENTS=y CONFIG_KERNEL_CGROUP_BPF=y CONFIG_BPF_TOOLCHAIN_HOST=y'
           reseed() {
             for p in $PKGS; do
               sed -i "s/^# CONFIG_PACKAGE_${p} is not set/CONFIG_PACKAGE_${p}=y/" .config || true
@@ -197,7 +192,6 @@ jobs:
               sed -i "s/^${key}=.*/${k}/" .config || true
               grep -q "^${k}" .config || echo "${k}" >> .config
             done
-            echo '# CONFIG_KERNEL_DEBUG_INFO_REDUCED is not set' >> .config
           }
           reseed
           make defconfig

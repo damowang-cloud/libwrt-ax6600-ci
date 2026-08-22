@@ -103,8 +103,6 @@ jobs:
           CONFIG_PACKAGE_kmod-fs-ext4=y
           CONFIG_PACKAGE_block-mount=y
           CONFIG_PACKAGE_parted=y
-          CONFIG_PACKAGE_luci-app-athena-led=y
-          CONFIG_PACKAGE_athena-led=y
           CONFIG_PACKAGE_luci-app-ttyd=y
           CONFIG_PACKAGE_luci-i18n-ttyd-zh-cn=y
           CONFIG_PACKAGE_ttyd=y
@@ -159,10 +157,6 @@ jobs:
         working-directory: openwrt
         run: |
           git clone --depth 1 https://github.com/sirpdboy/luci-app-partexp.git package/luci-app-partexp
-          git clone --depth 1 https://github.com/unraveloop/JDC-AX6600-Athena-LED-Controller.git /tmp/athena-led || true
-          [ -d /tmp/athena-led/luci-app-athena-led ] && cp -a /tmp/athena-led/luci-app-athena-led package/
-          [ -d /tmp/athena-led/athena-led ] && cp -a /tmp/athena-led/athena-led package/
-          rm -rf /tmp/athena-led
           if [ ! -d feeds/luci/themes/luci-theme-argon ]; then
             git clone --depth 1 -b master https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon || true
           fi
